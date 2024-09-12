@@ -1,18 +1,24 @@
-FROM ubuntu:14.10
-MAINTAINER Rob Haswell <me@robhaswell.co.uk>
+FROM ubuntu:20.04
+MAINTAINER Don Jo <ekachai.w@gmail.com>
 
-RUN apt-get -qqy update
-RUN apt-get -qqy upgrade
-RUN apt-get -qqy install apache2-utils squid3
+# Install necessary packages
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get -y install apache2-utils squid
 
-# If you are prone to gouging your eyes out, do not read the following 2 lines
-RUN sed -i 's@#\tauth_param basic program /usr/lib/squid3/basic_ncsa_auth /usr/etc/passwd@auth_param basic program /usr/lib/squid3/basic_ncsa_auth /usr/etc/passwd\nacl ncsa_users proxy_auth REQUIRED@' /etc/squid3/squid.conf
-RUN sed -i 's@^http_access allow localhost$@\0\nhttp_access allow ncsa_users@' /etc/squid3/squid.conf
+# Modify the Squid configuration for basic authentication
+RUN sed -i 's@#\tauth_param basic program /usr/lib/squid/basic_ncsa_auth /usr/etc/passwd@auth_param basic program /usr/lib/squid/basic_ncsa_auth /usr/etc/passwd\nacl ncsa_users proxy_auth REQUIRED@' /etc/squid/squid.conf
+RUN sed -i 's@^http_access allow localhost$@\0\nhttp_access allow ncsa_users@' /etc/squid/squid.conf
 
-RUN mkdir /usr/etc
+# Create necessary directories
+RUN mkdir -p /usr/etc
 
+# Expose the port Squid uses
 EXPOSE 3128
-VOLUME /var/log/squid3
 
+# Set up the log volume
+VOLUME /var/log/squid
+
+# Copy the init script and set it as the entry point
 ADD init /init
 CMD ["/init"]
